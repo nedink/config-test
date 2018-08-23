@@ -1,0 +1,61 @@
+# Active profiles should be set via environment variable
+---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+---
+products:
+  a: ${PRODUCTS_A:#{null}}
+  b: ${PRODUCTS_B:#{null}}
+  c: ${PRODUCTS_C:#{null}}
+app:
+  version: "cloud"
+databaseUrl: ${cloud.services.mysql.connection.jdbcurl:jdbc:h2:mem:test}
+---
+spring:
+  profiles: mysql
+  datasource:
+    url: ${cloud.services.mysql.connection.jdbcurl}
+    username: ${cloud.services.mysql.connection.username}
+    password: ${cloud.services.mysql.connection.password}
+    tomcat:
+      test-on-borrow: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL55Dialect
+---
+spring:
+  profiles: h2
+  h2:
+    console:
+      path: /h2
+      enabled: true
+  datasource:
+    url: jdbc:h2:mem:test;DB_CLOSE_ON_EXIT=false;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    platform: h2
+    driver-class-name: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+---
+spring:
+  profiles: security
+security:
+  oauth2:
+    client:
+      clientId: webstore
+      clientSecret: webstoresecret
+      accessTokenUri: ${vcap.services.uaa.credentials.url}/oauth/token
+      user-authorization-uri: ${vcap.services.uaa.credentials.url}/oauth/authorize
+      scope: openid,product.read,product.write
+      authentication-scheme: query
+    resource:
+      user-info-uri: ${vcap.services.uaa.credentials.url}/userinfo
+      token-info-uri: ${vcap.services.uaa.credentials.url}/introspect
+      prefer-token-info: false
